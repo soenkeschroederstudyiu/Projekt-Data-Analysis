@@ -268,19 +268,37 @@ best_lda_topics = lsa_topic_numbers[lda_coherence_scores.index(max(lda_coherence
 print("Best Themenanzahl LSA:", best_lsa_topics)
 print("Best Themenanzahl LDA:", best_lda_topics)
 
-
-    # mit verschienden Anzahlen testen
-        # Topic-Model trainieren
-        # wichtigeste Wörter bestimmen
-        # Coherence Score berechnen
-
-        # CS speichern
-        # grafisch darstellen?
-        # Anzahl auswählen
-
 # 8 - LSA und LDA vergleichen
 
+final_lsa_model = TruncatedSVD(n_components=best_lsa_topics, random_state=42)
+final_lsa_model.fit(tfidf_matrix)
 
+final_lsa_topics, final_lsa_coherence = get_topics_coherence(
+    final_lsa_model,
+    tfidf_vectorizer.get_feature_names_out(),
+    datafile["clean_description"],
+    number_of_words
+)
+
+
+final_lda_model = LatentDirichletAllocation(n_components=best_lda_topics, random_state=42)
+final_lda_model.fit(bow_matrix)
+
+final_lda_topics, final_lda_coherence = get_topics_coherence(
+    final_lda_model,
+    bow_vectorizer.get_feature_names_out(),
+    datafile["clean_description"],
+    number_of_words
+)
 
 # 9 - Ergebnis ausgeben
-    # falls sinnvoll
+
+print("\n--- LSA-Themen ---")
+for index, topic in enumerate(final_lsa_topics):
+    print(f"{index + 1}: {', '.join(topic)}")
+print(f"Coherence Score: {final_lsa_coherence:.4f}")
+
+print("\n--- LDA-Themen ---")
+for index, topic in enumerate(final_lda_topics):
+    print(f"{index + 1}: {', '.join(topic)}")
+print(f"Coherence Score: {final_lda_coherence:.4f}")

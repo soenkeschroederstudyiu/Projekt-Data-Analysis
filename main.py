@@ -17,6 +17,7 @@
     #    pandas
     #    scikit-learn
     #    nltk
+    #    gensim
 
 import string
 import pandas as pd
@@ -34,7 +35,8 @@ import sklearn
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.decomposition import TruncatedSVD, LatentDirichletAllocation
 
-
+from gensim.corpora import Dictionary, dictionary
+from gensim.models import CoherenceModel
 
 # 2 - Datensatz laden
 
@@ -115,18 +117,18 @@ tfidf_matrix = tfidf_vectorizer.fit_transform(datafile["clean_description"])
 
 
 # 5 - BOW und TF-IDF vergleichen
-print("BOW-MAtrix")
-bow_df = pd.DataFrame(bow_matrix.toarray(),columns=bow_vectorizer.get_feature_names_out())
-print(bow_df)
-print("Tfidf-Matrix")
-tfidf_df = pd.DataFrame(tfidf_matrix.toarray(),columns=tfidf_vectorizer.get_feature_names_out())
-print(tfidf_df)
-print("Häufigste Wörter nach BOW:")
-bow_word_counter = bow_df.sum().sort_values(ascending=False)
-print(bow_word_counter.head(20))
-print("Höchste TF-IDF-Werte:")
-tfidf_word_scores = tfidf_df.sum().sort_values(ascending=False)
-print(tfidf_word_scores.head(20))
+#print("BOW-MAtrix")
+#bow_df = pd.DataFrame(bow_matrix.toarray(),columns=bow_vectorizer.get_feature_names_out())
+#print(bow_df)
+#print("Tfidf-Matrix")
+#tfidf_df = pd.DataFrame(tfidf_matrix.toarray(),columns=tfidf_vectorizer.get_feature_names_out())
+#print(tfidf_df)
+#print("Häufigste Wörter nach BOW:")
+#bow_word_counter = bow_df.sum().sort_values(ascending=False)
+#print(bow_word_counter.head(20))
+#print("Höchste TF-IDF-Werte:")
+#tfidf_word_scores = tfidf_df.sum().sort_values(ascending=False)
+#print(tfidf_word_scores.head(20))
 
 # 6 - Themen mit extrahieren
 number_of_topics = 5
@@ -152,20 +154,101 @@ def print_topics(model, feature_names, number_words):
 lsa_model = TruncatedSVD(n_components=number_of_topics, random_state=42) # random_state für reproduzierbare Ergebnisse festgelegt
 lsa_model.fit(tfidf_matrix)
 
-print("LSA:")
-print_topics(lsa_model, tfidf_vectorizer.get_feature_names_out(), number_of_words)
+#print("LSA:")
+#print_topics(lsa_model, tfidf_vectorizer.get_feature_names_out(), number_of_words)
 
     # LDA
 
 lda_model = LatentDirichletAllocation(n_components=number_of_topics, random_state=42) # random_state für reproduzierbare Ergebnisse festgelegt
 lda_model.fit(bow_matrix)
 
-print("LDA:")
-print_topics(lda_model, bow_vectorizer.get_feature_names_out(), number_of_words)
+#print("LDA:")
+#print_topics(lda_model, bow_vectorizer.get_feature_names_out(), number_of_words)
 
 
 
 # 7 - Themenanzahl mit Coherence Score bestimmen
+def get_topics_coherence(model, feature_names, clean_texts, number_words):
+    '''
+
+    :param model: LDA- oder LSA-Model
+    :param feature_names: Liste der Themen
+    :param clean_texts: bereinigte Texte
+    :param number_words: Anzahl der Worte pro Thema
+    :return:
+    '''
+    topics = []
+    #wichtigste Wörter je Thema bestimmen
+    for topic in model.components_:
+        top_indices = topic.argsort()[-number_words:][::-1]
+        top_words = [feature_names[i] for i in top_indices]
+        topics.append(top_words)
+
+    # Bereinigte Texte für die verwendung mit Gensim-Funktionen vorbereiten
+    tokenized_texts = [
+        text.split()
+        for text in clean_texts
+    ]
+    gensim_dictionary = Dictionary(tokenized_texts)
+
+    #Coherence Score berechnen
+    coherence_model = CoherenceModel(
+        topics=topics,
+        texts=tokenized_texts,
+        dictionary=gensim_dictionary,
+        coherence="c_v",
+        processes=1 # Verwendung mehrerer Prozesse kann unter Windows zu Problemen in der Bibliothek gensim führen.
+    )
+    coherence_score = coherence_model.get_coherence()
+    return topics, coherence_score
+
+def test_topic_numbers(model_class, matrix, feature_names, clean_texts, topic_numbers=range(2,16)):
+    '''
+
+    :param model_class: "LatentDirichletAllocation" oder "TruncatedSVD"
+    :param matrix: bow_matrix oder tfidf_matrix
+    :param feature_names: Themennamen
+    :param clean_texts: bereinigte Texte
+    :param topic_numbers: zu prüfende Themenzahlen (default 2-16 Themen)
+    :return:
+    '''
+    coherence_scores = []
+    for topic_number in topic_numbers:
+        model = model_class(n_components=topic_number, random_state=42) # random_state = 42 für reproduzierbare Ergebnisse
+        model.fit(matrix)
+        topics, coherence_score = get_topics_coherence(model, feature_names, clean_texts, topic_number)
+        coherence_scores.append(coherence_score)
+
+        print(
+            f"{topic_number} Themen: "
+            f"Coherence Score = {coherence_score:.4f}"
+        )
+    return list(topic_numbers), coherence_scores
+#LSA
+#lsa_topics, lsa_coherence = get_topics_coherence(lsa_model, tfidf_vectorizer.get_feature_names_out(), datafile["issue_description"], number_of_words)
+#print(lsa_topics)
+#print(lsa_coherence)
+print("LSA:")
+lsa_topic_numbers, lsa_coherence_scores = test_topic_numbers(
+    TruncatedSVD,
+    tfidf_matrix,
+    tfidf_vectorizer.get_feature_names_out(),
+    datafile["clean_description"]
+)
+
+#LDA
+#lda_topics, lsa_coherence = get_topics_coherence(lda_model, bow_vectorizer.get_feature_names_out(), datafile["issue_description"], number_of_words)
+#print(lda_topics)
+#print(lda_coherence)
+print("LDA:")
+lsa_topic_numbers, lsa_coherence_scores = test_topic_numbers(
+    LatentDirichletAllocation,
+    bow_matrix,
+    bow_vectorizer.get_feature_names_out(),
+    datafile["clean_description"]
+)
+
+
 
     # mit verschienden Anzahlen testen
         # Topic-Model trainieren

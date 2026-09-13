@@ -219,7 +219,7 @@ def test_topic_numbers(model_class, matrix, feature_names, clean_texts, topic_nu
     for topic_number in topic_numbers:
         model = model_class(n_components=topic_number, random_state=42) # random_state = 42 für reproduzierbare Ergebnisse
         model.fit(matrix)
-        topics, coherence_score = get_topics_coherence(model, feature_names, clean_texts, topic_number)
+        topics, coherence_score = get_topics_coherence(model, feature_names, clean_texts, number_of_words)
         coherence_scores.append(coherence_score)
 
         print(

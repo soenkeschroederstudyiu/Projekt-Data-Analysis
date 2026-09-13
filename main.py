@@ -94,20 +94,39 @@ def clean_text(text):
 
 datafile["clean_description"] = datafile["issue_description"].apply(clean_text)
 #print(datafile[["issue_description","clean_description"]].head())
-    # Text in Kleinbuchstaben umwandeln
-    # Satzzeichen entfernen
-    # Text tokenisieren
-    # Stopwörter entfernen
-    # Wörter lemmatisieren
 
 # 4 - Texte vektorisieren
 
     # BOW
+bow_vectorizer = CountVectorizer()
+bow_matrix = bow_vectorizer.fit_transform(datafile["clean_description"])
+
+#print("BOW: ",bow_matrix)
+#print(bow_vectorizer.get_feature_names_out())
+#print(bow_matrix.shape)
 
     # TF-IDF
+tfidf_vectorizer = TfidfVectorizer()
+tfidf_matrix = tfidf_vectorizer.fit_transform(datafile["clean_description"])
+
+#print("TF-IDF: ", tfidf_matrix)
+#print(tfidf_matrix.shape)
+#print(tfidf_vectorizer.get_feature_names_out())
+
 
 # 5 - BOW und TF-IDF vergleichen
-    # ...falls es sich sinnvoll technisch umsetzen lässt. Sonst manuell.
+print("BOW-MAtrix")
+bow_df = pd.DataFrame(bow_matrix.toarray(),columns=bow_vectorizer.get_feature_names_out())
+print(bow_df)
+print("Tfidf-Matrix")
+tfidf_df = pd.DataFrame(tfidf_matrix.toarray(),columns=tfidf_vectorizer.get_feature_names_out())
+print(tfidf_df)
+print("Häufigste Wörter nach BOW:")
+bow_word_counter = bow_df.sum().sort_values(ascending=False)
+print(bow_word_counter.head(20))
+print("Höchste TF-IDF-Werte:")
+tfidf_word_scores = tfidf_df.sum().sort_values(ascending=False)
+print(tfidf_word_scores.head(20))
 
 # 6 - Themen mit extrahieren
 

@@ -18,6 +18,7 @@
     #    scikit-learn
     #    nltk
     #    gensim
+    #    mathplot
 
 import string
 import pandas as pd
@@ -37,6 +38,8 @@ from sklearn.decomposition import TruncatedSVD, LatentDirichletAllocation
 
 from gensim.corpora import Dictionary, dictionary
 from gensim.models import CoherenceModel
+
+import matplotlib.pyplot as plt
 
 # 2 - Datensatz laden
 
@@ -241,13 +244,29 @@ lsa_topic_numbers, lsa_coherence_scores = test_topic_numbers(
 #print(lda_topics)
 #print(lda_coherence)
 print("LDA:")
-lsa_topic_numbers, lsa_coherence_scores = test_topic_numbers(
+lda_topic_numbers, lda_coherence_scores = test_topic_numbers(
     LatentDirichletAllocation,
     bow_matrix,
     bow_vectorizer.get_feature_names_out(),
     datafile["clean_description"]
 )
 
+
+# grafische darstellung der SC der Themenanzahlen von LSA und LDA
+plt.plot(lsa_topic_numbers, lsa_coherence_scores, marker="o", label="LSA")
+plt.plot(lda_topic_numbers, lda_coherence_scores, marker="o", label="LDA")
+
+plt.xlabel("Anzahl der Themen")
+plt.ylabel("Coherence Score")
+plt.legend()
+plt.title("Coherence Score von LSA und LDA")
+plt.show()
+
+# beste Themenanzahl für LSA und LDA auswählen
+best_lsa_topics = lsa_topic_numbers[lsa_coherence_scores.index(max(lsa_coherence_scores))]
+best_lda_topics = lsa_topic_numbers[lda_coherence_scores.index(max(lda_coherence_scores))]
+print("Best Themenanzahl LSA:", best_lsa_topics)
+print("Best Themenanzahl LDA:", best_lda_topics)
 
 
     # mit verschienden Anzahlen testen
@@ -260,7 +279,8 @@ lsa_topic_numbers, lsa_coherence_scores = test_topic_numbers(
         # Anzahl auswählen
 
 # 8 - LSA und LDA vergleichen
-    # ...falls es sich sinnvoll technisch umsetzen lässt. Sonst manuell.
+
+
 
 # 9 - Ergebnis ausgeben
     # falls sinnvoll

@@ -129,10 +129,54 @@ tfidf_word_scores = tfidf_df.sum().sort_values(ascending=False)
 print(tfidf_word_scores.head(20))
 
 # 6 - Themen mit extrahieren
+number_of_topics = 5
+number_of_words = 10
 
     # LSA
+def lsa (number_of_topics, number_of_words,matrix, vectorizer):
+    '''
 
+    :param number_of_topics: Anzahl der zu bestimmenden Themen
+    :param number_of_words: Anzahl der Wörter pro Thema
+    :param matrix: TF-IDF-Matrix zur Verarbeitung
+    :param vectorizer: TF-IDF-Vectorizer zur Verarbeitung
+    :return:
+    '''
+    lsa_model = TruncatedSVD(n_components=number_of_topics, random_state=42) # random_state für reproduzierbare Ergebnisse festgelegt
+    lsa_model.fit(matrix)
+
+    feature_names = vectorizer.get_feature_names_out()
+    for topic_index, topic in enumerate(lsa_model.components_):
+        top_indices = topic.argsort()[-number_of_words:][::-1]
+        top_words = [feature_names[i] for i in top_indices]
+
+        print("LSA:")
+        print(f"Thema {topic_index + 1}: ")
+        print(top_words)
+lsa(number_of_topics, number_of_words,tfidf_matrix, tfidf_vectorizer)
     # LDA
+def lda (number_of_topics, number_of_words, matrix, vectorizer):
+    '''
+
+    :param number_of_topics: Anzahl der zu bestimmenden Themen
+    :param number_of_words: Anzahl der Wörter pro Thema
+    :param matrix: BOW-Matrix zur Verarbeitung
+    :param vectorizer: BOW-Vectorizer zur Verarbeitung
+    :return:
+    '''
+    lda_model = LatentDirichletAllocation(n_components=number_of_topics, random_state=42) # random_state für reproduzierbare Ergebnisse festgelegt
+    lda_model.fit(matrix)
+
+    feature_names = vectorizer.get_feature_names_out()
+    for topic_index, topic in enumerate(lda_model.components_):
+        top_indices = topic.argsort()[-number_of_words:][::-1]
+        top_words = [feature_names[i] for i in top_indices]
+
+        print("LDA:")
+        print(f"Thema {topic_index + 1}: ")
+        print(top_words)
+
+lda(number_of_topics, number_of_words, bow_matrix, bow_vectorizer)
 
 # 7 - Themenanzahl mit Coherence Score bestimmen
 

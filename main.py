@@ -15,7 +15,7 @@
 #    scikit-learn
 #    nltk
 #    gensim
-#    mathplotlib
+#    matplotlib
 
 # =========================================================
 # Importe:
@@ -46,11 +46,11 @@ import matplotlib.pyplot as plt
 # Konstanten:
 # ==========================================================
 
-COHERENCE_WORDS = 10                            # Anzahl der pro Thema für die Coherence-Berechnung
-DISPLAY_WORDS = 5                              # Anzahl der angezeigten Keywords pro Thema
 DATA_PATH = "municipal_training_set_1100.csv"   # PFad zur CSV-Datei.
 ISSUE_COLUMN = "issue_description"              # Name der Spalte, welche die Beschwerden beinhaltet
 TOPIC_NUMBERS=range(2, 16)                      # Range für der Themenanzahlen, die durchprobiert werden sollen
+COHERENCE_WORDS = 10                            # Anzahl der Worte pro Thema für die Coherence-Berechnung
+DISPLAY_WORDS = 5                               # Anzahl der angezeigten Worte pro Thema
 PRINT_SCORES = False                            # True: Detailausgabe bei der Berechnung der einzelnen Coherence Scores anzeigen; False: nicht anzeigen
 KEEP_DUPLICATES = True                          # True: alle Datensätze behalten; False: doppelte Beschwerdetexte entfernen
 

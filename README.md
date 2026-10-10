@@ -45,7 +45,7 @@ Die Einstellungen können über Konstanten am Anfang des Python-Programms angepa
 |---|---|----------------------------------------------------|
 | `DATA_PATH` | `"municipal_training_set_1100.csv"` | Pfad zur CSV-Datei                                 |
 | `ISSUE_COLUMN` | `"issue_description"` | Name der Spalte, welche die Beschwerden beinhaltet |
-| `TOPIC_NUMBERS` | `range(2, 16)` | Zu testende Themenanzahlen (2–15)                  |
+| `TOPIC_NUMBERS` | `range(2, 16)` | Zu testende Themenanzahlen (2–16)                  |
 | `COHERENCE_WORDS` | `10` | Worte pro Thema für die Coherence-Berechnung       |
 | `DISPLAY_WORDS` | `5` | Angezeigte Worte pro Thema                         |
 | `PRINT_SCORES` | `False` | Einzelne Coherence Scores zusätzlich ausgeben      |

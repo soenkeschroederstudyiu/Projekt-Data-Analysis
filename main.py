@@ -46,10 +46,12 @@ import matplotlib.pyplot as plt
 # Konstanten:
 # ==========================================================
 
-NUMBER_OF_WORDS = 10
-DATA_PATH = "municipal_training_set_1100.csv"
-TOPIC_NUMBERS=range(2, 16)
-PRINT_SCORES = False # Detailausgabe bei der berechnung der einzelnen Coherence Scores
+NUMBER_OF_WORDS = 10                            # Anzahl der Top-Wörter pro Thema für die Ausgabe und Coherence-Berechnung
+DATA_PATH = "municipal_training_set_1100.csv"   # PFad zur CSV-Datei.
+ISSUE_COLUMN = "issue_description"              # Name der Spalte, welche die Beschwerden beinhaltet
+TOPIC_NUMBERS=range(2, 16)                      # Range für der Themenanzahlen, die durchprobiert werden sollen
+PRINT_SCORES = False                            # True: Detailausgabe bei der Berechnung der einzelnen Coherence Scores anzeigen; False: nicht anzeigen
+KEEP_DUPLICATES = True                          # True: alle Datensätze behalten; False: doppelte Beschwerdetexte entfernen
 
 # ==========================================================
 # Funktionen
@@ -159,6 +161,7 @@ datafile = pd.read_csv(DATA_PATH)
 
 # Debuging:
 # behalten, falls der Datensatz geändert wird
+
 #print("Erste Zeilen:")
 #print(datafile.head())
 #print("Spalten:")
@@ -168,10 +171,22 @@ datafile = pd.read_csv(DATA_PATH)
 #print("Null-Felder")
 #print(datafile.isnull().sum())
 # Spalte mit Beschwerdetexten auswählen:
-#texts = datafile["issue_description"]
+#texts = datafile[ISSUE_COLUMN]
 # Erste Beschwerdetexte anzeigen:
 #print("Beispieltexte:")
 #print(texts.head())
+
+# Ohne Duplikate:
+
+if not KEEP_DUPLICATES:
+    datafile = datafile.drop_duplicates(subset=ISSUE_COLUMN).copy()
+
+# Übersicht über Datensatz ausgeben:
+
+print("Anzahl Datensätze: ",len(datafile))
+print("Fehlende Beschwerdetexte: ",datafile[ISSUE_COLUMN].isna().sum())
+print("Doppelte Beschwerdetexte: ",datafile[ISSUE_COLUMN].duplicated().sum())
+print("Durchschnittliche Wortanzahl: ", datafile[ISSUE_COLUMN].dropna().str.split().str.len().mean())
 
 #===========================================================
 # Texte bereinigen
@@ -180,7 +195,7 @@ datafile = pd.read_csv(DATA_PATH)
 #Stoppwörter und Lemmatizer vorbereiten
 stop_words = set(stopwords.words('english'))
 lemmatizer = WordNetLemmatizer()
-datafile["clean_description"] = datafile["issue_description"].apply(clean_text)
+datafile["clean_description"] = datafile[ISSUE_COLUMN].apply(clean_text)
 
 # =========================================================
 # Texte vektorisieren
@@ -223,7 +238,7 @@ lda_topic_numbers, lda_coherence_scores = test_topic_numbers(
 )
 
 # ==========================================================
-# grafische darstellung der CS der Themenanzahlen von LSA und LDA
+# grafische Darstellung der CS der Themenanzahlen von LSA und LDA
 # ==========================================================
 
 plt.plot(lsa_topic_numbers, lsa_coherence_scores, marker="o", label="LSA")

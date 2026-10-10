@@ -46,7 +46,8 @@ import matplotlib.pyplot as plt
 # Konstanten:
 # ==========================================================
 
-NUMBER_OF_WORDS = 10                            # Anzahl der Top-Wörter pro Thema für die Ausgabe und Coherence-Berechnung
+COHERENCE_WORDS = 10                            # Anzahl der pro Thema für die Coherence-Berechnung
+DISPLAY_WORDS = 5                              # Anzahl der angezeigten Keywords pro Thema
 DATA_PATH = "municipal_training_set_1100.csv"   # PFad zur CSV-Datei.
 ISSUE_COLUMN = "issue_description"              # Name der Spalte, welche die Beschwerden beinhaltet
 TOPIC_NUMBERS=range(2, 16)                      # Range für der Themenanzahlen, die durchprobiert werden sollen
@@ -140,7 +141,7 @@ def test_topic_numbers(model_class, matrix, feature_names, clean_texts, topic_nu
         model = model_class(n_components=topic_number,
                             random_state=42)  # random_state = 42 für reproduzierbare Ergebnisse
         model.fit(matrix)
-        topics, coherence_score = get_topics_coherence(model, feature_names, clean_texts, NUMBER_OF_WORDS)
+        topics, coherence_score = get_topics_coherence(model, feature_names, clean_texts, COHERENCE_WORDS)
         coherence_scores.append(coherence_score)
 
         if print_scores:
@@ -271,7 +272,7 @@ final_lsa_topics, final_lsa_coherence = get_topics_coherence(
     final_lsa_model,
     tfidf_vectorizer.get_feature_names_out(),
     datafile["clean_description"],
-    NUMBER_OF_WORDS
+    COHERENCE_WORDS
 )
 
 # LDA
@@ -282,7 +283,7 @@ final_lda_topics, final_lda_coherence = get_topics_coherence(
     final_lda_model,
     bow_vectorizer.get_feature_names_out(),
     datafile["clean_description"],
-    NUMBER_OF_WORDS
+    COHERENCE_WORDS
 )
 
 # ==========================================================
@@ -290,9 +291,11 @@ final_lda_topics, final_lda_coherence = get_topics_coherence(
 # ==========================================================
 
 print("\n--- LSA-Themen ---")
-print_topics(final_lsa_topics)
+for i, topic in enumerate(final_lsa_topics, start=1):
+    print(f"Thema {i}: {', '.join(topic[:DISPLAY_WORDS])}")
 print(f"Coherence Score: {final_lsa_coherence:.4f}")
 
 print("\n--- LDA-Themen ---")
-print_topics(final_lda_topics)
+for i, topic in enumerate(final_lda_topics, start=1):
+    print(f"Thema {i}: {', '.join(topic[:DISPLAY_WORDS])}")
 print(f"Coherence Score: {final_lda_coherence:.4f}")

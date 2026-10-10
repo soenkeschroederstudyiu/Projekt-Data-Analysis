@@ -15,7 +15,7 @@
 #    scikit-learn
 #    nltk
 #    gensim
-#    mathplotlib
+#    matplotlib
 
 # =========================================================
 # Importe:
@@ -46,10 +46,13 @@ import matplotlib.pyplot as plt
 # Konstanten:
 # ==========================================================
 
-NUMBER_OF_WORDS = 10
-DATA_PATH = "municipal_training_set_1100.csv"
-TOPIC_NUMBERS=range(2, 16)
-PRINT_SCORES = False # Detailausgabe bei der berechnung der einzelnen Coherence Scores
+DATA_PATH = "municipal_training_set_1100.csv"   # PFad zur CSV-Datei.
+ISSUE_COLUMN = "issue_description"              # Name der Spalte, welche die Beschwerden beinhaltet
+TOPIC_NUMBERS=range(2, 16)                      # Range für der Themenanzahlen, die durchprobiert werden sollen
+COHERENCE_WORDS = 10                            # Anzahl der Worte pro Thema für die Coherence-Berechnung
+DISPLAY_WORDS = 5                               # Anzahl der angezeigten Worte pro Thema
+PRINT_SCORES = False                            # True: Detailausgabe bei der Berechnung der einzelnen Coherence Scores anzeigen; False: nicht anzeigen
+KEEP_DUPLICATES = True                          # True: alle Datensätze behalten; False: doppelte Beschwerdetexte entfernen
 
 # ==========================================================
 # Funktionen
@@ -138,7 +141,7 @@ def test_topic_numbers(model_class, matrix, feature_names, clean_texts, topic_nu
         model = model_class(n_components=topic_number,
                             random_state=42)  # random_state = 42 für reproduzierbare Ergebnisse
         model.fit(matrix)
-        topics, coherence_score = get_topics_coherence(model, feature_names, clean_texts, NUMBER_OF_WORDS)
+        topics, coherence_score = get_topics_coherence(model, feature_names, clean_texts, COHERENCE_WORDS)
         coherence_scores.append(coherence_score)
 
         if print_scores:
@@ -159,6 +162,7 @@ datafile = pd.read_csv(DATA_PATH)
 
 # Debuging:
 # behalten, falls der Datensatz geändert wird
+
 #print("Erste Zeilen:")
 #print(datafile.head())
 #print("Spalten:")
@@ -168,10 +172,22 @@ datafile = pd.read_csv(DATA_PATH)
 #print("Null-Felder")
 #print(datafile.isnull().sum())
 # Spalte mit Beschwerdetexten auswählen:
-#texts = datafile["issue_description"]
+#texts = datafile[ISSUE_COLUMN]
 # Erste Beschwerdetexte anzeigen:
 #print("Beispieltexte:")
 #print(texts.head())
+
+# Ohne Duplikate:
+
+if not KEEP_DUPLICATES:
+    datafile = datafile.drop_duplicates(subset=ISSUE_COLUMN).copy()
+
+# Übersicht über Datensatz ausgeben:
+
+print("Anzahl Datensätze: ",len(datafile))
+print("Fehlende Beschwerdetexte: ",datafile[ISSUE_COLUMN].isna().sum())
+print("Doppelte Beschwerdetexte: ",datafile[ISSUE_COLUMN].duplicated().sum())
+print("Durchschnittliche Wortanzahl: ", datafile[ISSUE_COLUMN].dropna().str.split().str.len().mean())
 
 #===========================================================
 # Texte bereinigen
@@ -180,7 +196,7 @@ datafile = pd.read_csv(DATA_PATH)
 #Stoppwörter und Lemmatizer vorbereiten
 stop_words = set(stopwords.words('english'))
 lemmatizer = WordNetLemmatizer()
-datafile["clean_description"] = datafile["issue_description"].apply(clean_text)
+datafile["clean_description"] = datafile[ISSUE_COLUMN].apply(clean_text)
 
 # =========================================================
 # Texte vektorisieren
@@ -223,7 +239,7 @@ lda_topic_numbers, lda_coherence_scores = test_topic_numbers(
 )
 
 # ==========================================================
-# grafische darstellung der CS der Themenanzahlen von LSA und LDA
+# grafische Darstellung der CS der Themenanzahlen von LSA und LDA
 # ==========================================================
 
 plt.plot(lsa_topic_numbers, lsa_coherence_scores, marker="o", label="LSA")
@@ -256,7 +272,7 @@ final_lsa_topics, final_lsa_coherence = get_topics_coherence(
     final_lsa_model,
     tfidf_vectorizer.get_feature_names_out(),
     datafile["clean_description"],
-    NUMBER_OF_WORDS
+    COHERENCE_WORDS
 )
 
 # LDA
@@ -267,7 +283,7 @@ final_lda_topics, final_lda_coherence = get_topics_coherence(
     final_lda_model,
     bow_vectorizer.get_feature_names_out(),
     datafile["clean_description"],
-    NUMBER_OF_WORDS
+    COHERENCE_WORDS
 )
 
 # ==========================================================
@@ -275,9 +291,11 @@ final_lda_topics, final_lda_coherence = get_topics_coherence(
 # ==========================================================
 
 print("\n--- LSA-Themen ---")
-print_topics(final_lsa_topics)
+for i, topic in enumerate(final_lsa_topics, start=1):
+    print(f"Thema {i}: {', '.join(topic[:DISPLAY_WORDS])}")
 print(f"Coherence Score: {final_lsa_coherence:.4f}")
 
 print("\n--- LDA-Themen ---")
-print_topics(final_lda_topics)
+for i, topic in enumerate(final_lda_topics, start=1):
+    print(f"Thema {i}: {', '.join(topic[:DISPLAY_WORDS])}")
 print(f"Coherence Score: {final_lda_coherence:.4f}")
